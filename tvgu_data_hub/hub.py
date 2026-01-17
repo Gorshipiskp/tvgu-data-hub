@@ -47,7 +47,7 @@ async def get_all_tvgu_data() -> dict[str, list]:
     teachers_identified = prepare_teachers(lessons_pks)
     places_identified: defaultdict[str, PlaceAggregated] = prepare_places(lessons_with_ids)
     subjects_identified: dict[str, dict[str, SubjectAggregated]] = prepare_subjects(lessons_with_ids)
-    groups_identified: defaultdict[str, GroupAggregated] = prepare_groups(groups_pks, structs_identified)
+    groups_identified: defaultdict[str, GroupAggregated] = prepare_groups(schedules, groups_pks, structs_identified)
     lessons_aggregated: defaultdict[str, LessonAggregated] = prepare_lessons(
         lessons_with_ids,
         places_identified,
@@ -55,6 +55,8 @@ async def get_all_tvgu_data() -> dict[str, list]:
         teachers_identified,
         groups_identified
     )
+
+    print(*groups_identified.values(), sep="\n")
 
     return {
         "departments": list(departments_identified.values()),

@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Union, Optional
 
-from schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group
+from schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
 from structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
 from structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase
 from teachers_parser.tvgu_teachers_parser.misc import Teacher
@@ -15,6 +15,7 @@ from tvgu_data_hub.normalizer import LessonWithID, PlaceAggregated, SubjectAggre
 class GroupAggregated(GroupBase):
     id: int
     struct_id: int
+    has_schedule: bool
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -117,7 +118,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
     return structs_identified
 
 
-def prepare_groups(groups_pks: dict[tuple, PK],
+def prepare_groups(schedules: AllGroupsSchedules, groups_pks: dict[tuple, PK],
                    structs_identified: dict[tuple, StructAggregated]) -> dict[tuple, GroupAggregated]:
     groups_aggregated: list[GroupAggregated] = []
 
@@ -142,7 +143,8 @@ def prepare_groups(groups_pks: dict[tuple, PK],
                 group,
                 "faculty_code",
                 id=group_pk.id,
-                struct_id=struct.id
+                struct_id=struct.id,
+                has_schedule=schedules.get(struct.code, {}).get(group) is not None
             )
         )
     groups_identified: dict[tuple, GroupAggregated] = {}
