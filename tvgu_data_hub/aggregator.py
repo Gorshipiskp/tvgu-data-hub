@@ -182,7 +182,7 @@ def prepare_teachers(lessons_pks: dict[tuple, PK]) -> dict[tuple, Union[TeacherA
     return teachers_identified
 
 
-def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> defaultdict[str, SubjectAggregated]:
+def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> dict[str, dict[str, SubjectAggregated]]:
     all_subjects: set[tuple[str, str]] = set((group.subject_name, group.subject_type) for group in lessons_with_ids)
     subjects_aggregated: list[SubjectAggregated] = []
 
@@ -199,7 +199,7 @@ def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> defaultdict[str, S
     for subject in subjects_aggregated:
         subjects_identified[subject.type][subject.name] = subject
 
-    return subjects_identified
+    return dict(subjects_identified)
 
 
 def prepare_places(lessons_with_ids: list[LessonWithID]) -> defaultdict[str, PlaceAggregated]:

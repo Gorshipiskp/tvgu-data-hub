@@ -46,7 +46,7 @@ async def get_all_tvgu_data() -> dict[str, list]:
     structs_identified: dict[tuple, StructAggregated] = prepare_structs(structs_pks, groups_pks, departments_identified)
     teachers_identified = prepare_teachers(lessons_pks)
     places_identified: defaultdict[str, PlaceAggregated] = prepare_places(lessons_with_ids)
-    subjects_identified: defaultdict[str, SubjectAggregated] = prepare_subjects(lessons_with_ids)
+    subjects_identified: dict[str, dict[str, SubjectAggregated]] = prepare_subjects(lessons_with_ids)
     groups_identified: defaultdict[str, GroupAggregated] = prepare_groups(groups_pks, structs_identified)
     lessons_aggregated: defaultdict[str, LessonAggregated] = prepare_lessons(
         lessons_with_ids,
@@ -61,7 +61,7 @@ async def get_all_tvgu_data() -> dict[str, list]:
         "structs": list(structs_identified.values()),
         "teachers": list(teachers_identified.values()),
         "places": list(places_identified.values()),
-        "subjects": [subject for subjects in subjects_identified.values() for subject in subjects],
+        "subjects": [subject for subjects in subjects_identified.values() for subject in subjects.values()],
         "groups": list(groups_identified.values()),
         "lessons": list(lessons_aggregated.values())
     }
