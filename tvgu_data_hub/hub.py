@@ -1,5 +1,5 @@
 import asyncio
-from collections import defaultdict
+from typing import Union
 
 from schedule_parser.tvgu_schedule_parser import get_all_tvgu_schedules
 from schedule_parser.tvgu_schedule_parser.misc import AllGroupsSchedules
@@ -9,7 +9,7 @@ from teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
 from teachers_parser.tvgu_teachers_parser.misc import Teacher
 from .aggregator import prepare_lessons, LessonAggregated, prepare_places, prepare_subjects, prepare_teachers, \
     GroupAggregated, prepare_groups, StructAggregated, prepare_structs, DepartmentAggregated, prepare_departments
-from .creator_fk import PK, create_entities_pks, inherit_instance_dataclass
+from .creator_fk import PK, create_entities_pks, inherit_instance_dataclass, TeacherSmallAggregated, TeacherAggregated
 from .normalizer import LessonWithGroups, lessons_normalize, LessonWithID, \
     SubjectAggregated, PlaceAggregated, normalize_teachers_for_lessons
 
@@ -42,21 +42,23 @@ async def get_all_tvgu_data() -> dict[str, list]:
         for lesson_pk in lessons_pks.values()
     ]
 
-    departments_identified: dict[tuple, DepartmentAggregated] = prepare_departments(structs_pks)
-    structs_identified: dict[tuple, StructAggregated] = prepare_structs(structs_pks, groups_pks, departments_identified)
-    teachers_identified = prepare_teachers(lessons_pks)
-    places_identified: defaultdict[str, PlaceAggregated] = prepare_places(lessons_with_ids)
+    teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]] = prepare_teachers(lessons_pks,
+                                                                                                          teachers)
+    departments_identified: dict[tuple, DepartmentAggregated] = prepare_departments(structs_pks, teachers_identified)
+
+    structs_identified: dict[tuple, StructAggregated] = prepare_structs(
+        structs_pks, groups_pks, teachers_identified, departments_identified
+    )
+    places_identified: dict[str, PlaceAggregated] = prepare_places(lessons_with_ids)
     subjects_identified: dict[str, dict[str, SubjectAggregated]] = prepare_subjects(lessons_with_ids)
-    groups_identified: defaultdict[str, GroupAggregated] = prepare_groups(schedules, groups_pks, structs_identified)
-    lessons_aggregated: defaultdict[str, LessonAggregated] = prepare_lessons(
+    groups_identified: dict[str, GroupAggregated] = prepare_groups(schedules, groups_pks, structs_identified)
+    lessons_aggregated: dict[tuple, LessonAggregated] = prepare_lessons(
         lessons_with_ids,
         places_identified,
         subjects_identified,
         teachers_identified,
         groups_identified
     )
-
-    print(*groups_identified.values(), sep="\n")
 
     return {
         "departments": list(departments_identified.values()),

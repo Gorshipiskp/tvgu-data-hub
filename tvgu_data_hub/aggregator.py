@@ -4,9 +4,9 @@ from typing import Union, Optional
 
 from schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
 from structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
-from structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase
+from structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
 from teachers_parser.tvgu_teachers_parser.misc import Teacher
-from tvgu_data_hub.creator_fk import PK, create_entities_pks, TeacherAggregated, TeacherSmallAggregated, \
+from tvgu_data_hub.creator_fk import PK, TeacherAggregated, TeacherSmallAggregated, \
     inherit_instance_dataclass
 from tvgu_data_hub.normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
 
@@ -21,6 +21,7 @@ class GroupAggregated(GroupBase):
 @dataclass(frozen=True, kw_only=True)
 class StructAggregated(TvGUStructBase):
     id: int
+    boss_id: Optional[int]
     groups_ids: tuple[int]
     departments_ids: tuple[int]
 
@@ -28,6 +29,8 @@ class StructAggregated(TvGUStructBase):
 @dataclass(frozen=True, kw_only=True)
 class DepartmentAggregated(DepartmentBase):
     id: int
+    boss_id: Optional[int]
+    boss_jobs: Optional[list[str]]
     struct_id: int
 
 
@@ -57,18 +60,34 @@ class LessonAggregated(LessonBase):
         return NotImplemented
 
 
-def prepare_departments(structs_pks: dict[tuple, PK]) -> dict[tuple, StructAggregated]:
+def prepare_departments(
+        structs_pks: dict[tuple, PK],
+        teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
+) -> dict[tuple, StructAggregated]:
     departments: dict[tuple, StructAggregated] = {}
     department_id_counter: int = 0
 
+    max_teacher_id: int = max(teacher.id for teacher in teachers_identified.values())
+
     for struct_pk in structs_pks.values():
         for department in struct_pk.entity.departments:
+            if department.boss_surname is None:
+                cur_teacher = None
+            else:
+                cur_teacher, max_teacher_id, is_new = find_teacher_or_create_small(
+                    teachers_identified.values(), department, max_teacher_id
+                )
+
+                if is_new:
+                    teachers_identified[cur_teacher._identify()] = cur_teacher
+
             new_department: DepartmentAggregated = inherit_instance_dataclass(
                 DepartmentAggregated,
                 department,
-                "struct_name",
+                "struct_name", "boss_name", "boss_surname", "boss_patronymic",
                 id=department_id_counter,
-                struct_id=struct_pk.id
+                struct_id=struct_pk.id,
+                boss_id=cur_teacher.id if cur_teacher is not None else None
             )
             department_id_counter += 1
 
@@ -78,8 +97,11 @@ def prepare_departments(structs_pks: dict[tuple, PK]) -> dict[tuple, StructAggre
 
 
 def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
+                    teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
                     departments_identified: dict[tuple, StructAggregated]) -> dict[tuple, StructAggregated]:
     structs_aggregated: list[StructAggregated] = []
+
+    max_teacher_id: int = max(teacher.id for teacher in teachers_identified.values())
 
     def find_group_by_name(group_name: str) -> Optional[PK]:
         for group_pk in groups_pks.values():
@@ -97,17 +119,29 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
             if group_pk is not None:
                 groups_ids.append(group_pk.id)
 
-        departments_ids: tuple[int] = tuple(departments_identified[department._identify()].id
-                                            for department in struct.departments)
+        departments_ids: tuple[int] = tuple(
+            departments_identified[department._identify()].id for department in struct.departments
+        )
+
+        if struct.boss_surname is None:
+            cur_teacher = None
+        else:
+            cur_teacher, max_teacher_id, is_new = find_teacher_or_create_small(
+                teachers_identified.values(), struct, max_teacher_id
+            )
+
+            if is_new:
+                teachers_identified[cur_teacher._identify()] = cur_teacher
 
         structs_aggregated.append(
             inherit_instance_dataclass(
                 StructAggregated,
                 struct,
-                "groups", "departments",
+                "groups", "departments", "boss_name", "boss_surname", "boss_patronymic",
                 id=struct_id,
                 groups_ids=tuple(groups_ids),
-                departments_ids=departments_ids
+                departments_ids=departments_ids,
+                boss_id=None if cur_teacher is None else cur_teacher.id
             )
         )
     structs_identified: dict[tuple, StructAggregated] = {}
@@ -155,24 +189,32 @@ def prepare_groups(schedules: AllGroupsSchedules, groups_pks: dict[tuple, PK],
     return groups_identified
 
 
-def prepare_teachers(lessons_pks: dict[tuple, PK]) -> dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]]:
-    teacher_set: Union[set[Teacher], set[Teacher, TeacherSmall]] = set()
+def prepare_teachers(
+        lessons_pks: dict[tuple, PK],
+        teachers: list[Teacher]
+) -> dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]]:
+    teacher_set: dict[Teacher | TeacherSmall, bool] = {}
+
+    for teacher in teachers:
+        teacher_set[teacher] = False
 
     for lesson_pk in lessons_pks.values():
         for teacher in lesson_pk.entity.teachers:
-            teacher_set.add(teacher)
+            teacher_set[teacher] = True
 
-    teachers_pks: dict[str, PK] = create_entities_pks(
-        teacher_set, custom_key_getter=lambda teacher: teacher._identify()
-    )
+    teachers_pks: list[tuple[bool, PK]] = [
+        (is_has_lessons, PK(id=teacher_id, entity=teacher))
+        for teacher_id, (teacher, is_has_lessons) in enumerate(teacher_set.items())
+    ]
 
     teachers_aggregated: list[Union[TeacherAggregated, TeacherSmallAggregated]] = []
 
-    for teacher_pk in teachers_pks.values():
+    for has_lessons, teacher_pk in teachers_pks:
         teacher_new_instance: Union[TeacherAggregated, TeacherSmallAggregated] = inherit_instance_dataclass(
             TeacherAggregated if isinstance(teacher_pk.entity, Teacher) else TeacherSmallAggregated,
             teacher_pk.entity,
-            id=teacher_pk.id
+            id=teacher_pk.id,
+            has_lessons=has_lessons
         )
 
         teachers_aggregated.append(teacher_new_instance)
@@ -204,7 +246,7 @@ def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> dict[str, dict[str
     return dict(subjects_identified)
 
 
-def prepare_places(lessons_with_ids: list[LessonWithID]) -> defaultdict[str, PlaceAggregated]:
+def prepare_places(lessons_with_ids: list[LessonWithID]) -> dict[str, PlaceAggregated]:
     all_places: set[str] = set(group.place for group in lessons_with_ids)
     places_aggregated: list[PlaceAggregated] = []
 
@@ -216,7 +258,7 @@ def prepare_places(lessons_with_ids: list[LessonWithID]) -> defaultdict[str, Pla
                 is_link="http" in place
             )
         )
-    places_identified: defaultdict[str, PlaceAggregated] = defaultdict(dict)
+    places_identified: dict[str, PlaceAggregated] = {}
 
     for place in places_aggregated:
         places_identified[place.name] = place
@@ -230,7 +272,7 @@ def prepare_lessons(
         subjects_identified: dict[str, dict[str, SubjectAggregated]],
         teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
         groups_identified: dict[tuple, GroupAggregated],
-) -> list[LessonAggregated]:
+) -> dict[tuple, LessonAggregated]:
     lessons_aggregated: list[LessonAggregated] = []
 
     for lesson in lessons:
@@ -256,3 +298,41 @@ def prepare_lessons(
         lessons_identified[lesson._identify()] = lesson
 
     return lessons_identified
+
+
+def find_teacher_or_create_small(
+        teachers: list[Union[TeacherAggregated, TeacherSmallAggregated]],
+        struct: Union[TvGUStruct, Department],
+        cur_max_teacher_id: int
+) -> tuple[Union[TeacherSmallAggregated, TeacherAggregated], int, bool]:
+    initials_to_check: str = f"{struct.boss_surname} {struct.boss_name[0]}.{struct.boss_patronymic[0]}."
+
+    for teacher in teachers:
+        if isinstance(teacher, TeacherAggregated):
+            cond: bool = all([
+                teacher.name.lower() == struct.boss_name.lower(),
+                teacher.surname.lower() == struct.boss_surname.lower(),
+                teacher.patronymic.lower() == struct.boss_patronymic.lower()
+            ])
+        elif isinstance(teacher, TeacherSmallAggregated):
+            cond: bool = teacher.initials.lower() == initials_to_check.lower()
+        else:
+            raise NotImplementedError(f"Необрабатываемый тип преподавателя: {type(teacher)}")
+
+        if cond:
+            return (
+                teacher,
+                cur_max_teacher_id,
+                False
+            )
+
+    return (
+        TeacherSmallAggregated(
+            initials=initials_to_check,
+            role=f"Руководитель '{struct.name}'",
+            id=cur_max_teacher_id + 1,
+            has_lessons=False
+        ),
+        cur_max_teacher_id + 1,
+        True
+    )

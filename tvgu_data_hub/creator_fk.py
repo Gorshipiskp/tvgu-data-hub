@@ -14,11 +14,13 @@ class PK:
 @dataclass(frozen=True, kw_only=True)
 class TeacherAggregated(Teacher):
     id: int
+    has_lessons: bool
 
 
 @dataclass(frozen=True, kw_only=True)
 class TeacherSmallAggregated(TeacherSmall):
     id: int
+    has_lessons: bool
 
 
 # Функция для создания уникальных идентификаторов на основе итогово списка сущностей
