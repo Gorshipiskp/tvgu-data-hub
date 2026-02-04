@@ -7,14 +7,14 @@ from schedule_parser.tvgu_schedule_parser.misc import Lesson
 from teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
-def get_surname_from_initials(initials: str) -> str:
-    return normalize(initials).split()[0]
-
-
 def normalize(s: Optional[str]) -> str:
     if not s:
         return ""
     return re.sub(r'\s+', ' ', s.strip().lower())
+
+
+def get_surname_from_initials(initials: str) -> str:
+    return normalize(initials).split()[0]
 
 
 def token_set(s: Optional[str]) -> set:
@@ -32,7 +32,7 @@ def do_fuzzy_score(a: str, b: str) -> float:
 def score_candidate(lesson: Lesson, candidate: Teacher) -> float:
     score: float = 0.0
 
-    subject = lesson.subject_name or ""
+    subject: str = lesson.subject_name or ""
 
     # Есть ли предмет в списке преподаваемых дисциплин
     if subject and candidate.teaching_disciplines:
@@ -77,4 +77,5 @@ def resolve_teacher_small_in_lesson(lesson: Lesson, candidates: list[Teacher],
         scored.append((candidate, score))
 
     scored.sort(key=lambda x: x[1], reverse=True)
+
     return scored

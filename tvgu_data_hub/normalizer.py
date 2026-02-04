@@ -127,10 +127,13 @@ def normalize_teachers_for_lessons(lesson_pks: dict[str, PK], teachers: list[Tea
                 cur_teachers.append(suitable_teachers[0])
             else:
                 if not USE_HEURISTICS_FOR_TEACHERS:
+                    cur_teachers.append(teacher_small)
                     continue
 
                 # Эвристическая оценка на основе информации пары
-                possible_teachers: list[tuple[Teacher, float]] = resolve_teacher_small_in_lesson(lesson, teachers)
+                possible_teachers: list[tuple[Teacher, float]] = resolve_teacher_small_in_lesson(
+                    lesson, suitable_teachers
+                )
 
                 best_teacher_match: Teacher = max(possible_teachers, key=lambda x: x[1])[0]
                 cur_teachers.append(best_teacher_match)
