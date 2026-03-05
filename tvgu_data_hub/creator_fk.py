@@ -1,8 +1,8 @@
 from dataclasses import dataclass, fields
-from typing import Any, Optional, ClassVar, TypeVar, Type, Callable
+from typing import Any, Optional, TypeVar, Type, Callable
 
-from schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
-from teachers_parser.tvgu_teachers_parser.misc import Teacher
+from ..schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
+from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -61,6 +61,7 @@ def create_entities_pks(entities: list[Any], key_name: Optional[str] = None, ski
 
 T = TypeVar("T")
 K = TypeVar("K", bound=dataclass)
+
 
 def inherit_instance_dataclass(class_: Type[T], entity: K, *to_filter, **extra_data) -> T:
     data: dict[str, Any] = {

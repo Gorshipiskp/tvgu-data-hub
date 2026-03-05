@@ -2,14 +2,14 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Union, Optional
 
-from schedule_parser.tvgu_schedule_parser.consts import WeekMark, SubjectType
-from schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
-from structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
-from structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
-from teachers_parser.tvgu_teachers_parser.misc import Teacher
-from tvgu_data_hub.creator_fk import PK, TeacherAggregated, TeacherSmallAggregated, \
+from ..schedule_parser.tvgu_schedule_parser.consts import WeekMark, SubjectType
+from ..schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
+from ..structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
+from ..structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
+from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
+from ..tvgu_data_hub.creator_fk import PK, TeacherAggregated, TeacherSmallAggregated, \
     inherit_instance_dataclass
-from tvgu_data_hub.normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
+from ..tvgu_data_hub.normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
 
 
 @dataclass(frozen=True, kw_only=True)

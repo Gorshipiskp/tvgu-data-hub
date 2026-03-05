@@ -1,17 +1,17 @@
 import asyncio
 from typing import Union
 
-from schedule_parser.tvgu_schedule_parser import get_all_tvgu_schedules
-from schedule_parser.tvgu_schedule_parser.misc import AllGroupsSchedules
-from structs_parser.tvgu_structs_parser import get_all_tvgu_structs
-from structs_parser.tvgu_structs_parser.normalizer import TvGUStruct
-from teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
-from teachers_parser.tvgu_teachers_parser.misc import Teacher
 from .aggregator import prepare_lessons, LessonAggregated, prepare_places, prepare_subjects, prepare_teachers, \
-    GroupAggregated, prepare_groups, StructAggregated, prepare_structs, DepartmentAggregated, prepare_departments
+    GroupAggregated, prepare_groups, prepare_structs, DepartmentAggregated, prepare_departments
 from .creator_fk import PK, create_entities_pks, inherit_instance_dataclass, TeacherSmallAggregated, TeacherAggregated
-from .normalizer import LessonWithGroups, lessons_normalize, LessonWithID, \
-    SubjectAggregated, PlaceAggregated, normalize_teachers_for_lessons
+from .normalizer import LessonWithGroups, lessons_normalize, LessonWithID, SubjectAggregated, PlaceAggregated, \
+    normalize_teachers_for_lessons
+from ..schedule_parser.tvgu_schedule_parser import get_all_tvgu_schedules
+from ..schedule_parser.tvgu_schedule_parser.misc import AllGroupsSchedules
+from ..structs_parser.tvgu_structs_parser import get_all_tvgu_structs
+from ..structs_parser.tvgu_structs_parser.normalizer import TvGUStruct
+from ..teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
+from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
 async def get_all_tvgu_data() -> dict[str, list]:
