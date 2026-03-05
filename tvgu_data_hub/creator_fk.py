@@ -1,5 +1,5 @@
 from dataclasses import dataclass, fields
-from typing import Any, Optional
+from typing import Any, Optional, ClassVar, TypeVar, Type, Callable
 
 from schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
 from teachers_parser.tvgu_teachers_parser.misc import Teacher
@@ -25,9 +25,9 @@ class TeacherSmallAggregated(TeacherSmall):
 
 # Функция для создания уникальных идентификаторов на основе итогово списка сущностей
 # (должно гарантироваться, что этот список является конечным, то есть, иных сущностей того же рода нигде не встретится)
-def create_entities_pks(entities: list[PK], key_name: Optional[str] = None, skip_none_keys: bool = False,
-                        *, custom_key_getter: Optional[callable] = None) -> dict[PK, PK]:
-    fks: dict[PK, PK] = {}
+def create_entities_pks(entities: list[Any], key_name: Optional[str] = None, skip_none_keys: bool = False,
+                        *, custom_key_getter: Optional[Callable[..., tuple]] = None) -> dict[tuple, PK]:
+    fks: dict[tuple, PK] = {}
 
     if key_name is None and custom_key_getter is None:
         raise ValueError("`key_name` или `custom_key_getter` должны быть выставлены")
@@ -37,11 +37,11 @@ def create_entities_pks(entities: list[PK], key_name: Optional[str] = None, skip
     for entity_id, entity in enumerate(entities):
         if custom_key_getter is None:
             if isinstance(entity, dict):
-                key: PK = entity.get(key_name)
+                key: tuple = entity.get(key_name)
             else:
-                key: PK = getattr(entity, key_name)
+                key: tuple = getattr(entity, key_name)
         else:
-            key: PK = custom_key_getter(entity)
+            key: tuple = custom_key_getter(entity)
 
         if key is None:
             if skip_none_keys:
@@ -59,9 +59,13 @@ def create_entities_pks(entities: list[PK], key_name: Optional[str] = None, skip
     return fks
 
 
-def inherit_instance_dataclass(class_: callable, entity: PK, *to_filter, **extra_data) -> PK:
-    data = {
+T = TypeVar("T")
+K = TypeVar("K", bound=dataclass)
+
+def inherit_instance_dataclass(class_: Type[T], entity: K, *to_filter, **extra_data) -> T:
+    data: dict[str, Any] = {
         f.name: getattr(entity, f.name)
-        for f in fields(type(entity)) if f.name not in to_filter
+        for f in fields(type(entity))
+        if f.name not in to_filter
     }
     return class_(**extra_data, **data)

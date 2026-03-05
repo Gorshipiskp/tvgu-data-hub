@@ -1,10 +1,10 @@
 import json
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, Callable
 
 
 def list_to_dict_by_key(list_: list, key_name: str, skip_none_keys: bool = False, could_be_collisions: bool = False,
-                        *, handle_key_func: callable = lambda x: x) -> dict:
+                        *, handle_key_func: Callable[[str], tuple] = lambda x: x) -> dict:
     dict_: defaultdict = defaultdict(lambda: [] if could_be_collisions else (lambda: None))
 
     for entity in list_:

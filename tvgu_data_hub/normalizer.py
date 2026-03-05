@@ -13,7 +13,7 @@ from .teacher_heuristics import resolve_teacher_small_in_lesson
 
 @dataclass(frozen=True, kw_only=True)
 class LessonWithGroups(Lesson):
-    groups: tuple[Group]
+    groups: tuple[Group, ...]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -48,9 +48,9 @@ class PlaceAggregated:
     name: str
     is_link: bool
 
-    def _identify(self) -> tuple[str, SubjectType]:
+    def _identify(self) -> tuple[str]:
         return (
-            self.name
+            self.name,
         )
 
     def __hash__(self) -> int:
@@ -63,7 +63,7 @@ class PlaceAggregated:
 
 
 def lessons_normalize(schedules: AllGroupsSchedules) -> list[LessonWithGroups]:
-    lessons_flat: list[Lesson] = [
+    lessons_flat: list[LessonWithGroups] = [
         # Сорян за такой comprehension)
         LessonWithGroups(
             **dict((field.name, getattr(lesson, field.name)) for field in fields(lesson) if field.name != "week_day"),
@@ -86,7 +86,7 @@ def lessons_normalize(schedules: AllGroupsSchedules) -> list[LessonWithGroups]:
 
     for lessons_group in grouped.values():
         base_lesson: LessonWithGroups = lessons_group[0]
-        grouped_teachers: defaultdict[str, list[Teacher]] = defaultdict(list)
+        grouped_teachers: defaultdict[str, list[TeacherSmall]] = defaultdict(list)
 
         for lesson in lessons_group:
             for teacher in lesson.teachers:
@@ -95,7 +95,7 @@ def lessons_normalize(schedules: AllGroupsSchedules) -> list[LessonWithGroups]:
         # Да, убираем повторения, коими считаем только совпадение инициал
         # Иногда у одного и того же преподавателя разные роли, а вероятность проведения пары преподавателями с
         # одинаковыми инициалами крайне мала
-        normalized_teachers: tuple[Teacher] = tuple(teachers[0] for teachers in grouped_teachers.values())
+        normalized_teachers: tuple[TeacherSmall, ...] = tuple(teachers[0] for teachers in grouped_teachers.values())
 
         normalized_lessons.append(
             replace(
@@ -108,12 +108,12 @@ def lessons_normalize(schedules: AllGroupsSchedules) -> list[LessonWithGroups]:
     return normalized_lessons
 
 
-def normalize_teachers_for_lessons(lesson_pks: dict[str, PK], teachers: list[Teacher]) -> dict[str, PK]:
+def normalize_teachers_for_lessons(lesson_pks: dict[tuple, PK], teachers: list[Teacher]) -> dict[tuple, PK]:
     teachers_by_initials: dict[str, list[Teacher]] = list_to_dict_by_key(teachers, "initials", False, True,
                                                                          handle_key_func=lambda x: x.lower())
     for lesson_key, lesson_pk in lesson_pks.items():
         lesson: LessonWithGroups = lesson_pk.entity
-        cur_teachers: Union[list[Teacher], list[Union[Teacher, TeacherSmall]]] = []
+        cur_teachers: list[Union[TeacherSmall | Teacher]] = []
 
         for teacher_small in lesson.teachers:
             suitable_teachers: Optional[list[Teacher]] = teachers_by_initials.get(teacher_small.initials.lower())

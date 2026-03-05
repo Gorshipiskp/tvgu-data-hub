@@ -25,7 +25,7 @@ async def get_all_tvgu_data() -> dict[str, list]:
         get_all_tvgu_schedules()
     )
 
-    structs_pks: dict[str, PK] = create_entities_pks(structs, "name")
+    structs_pks: dict[tuple, PK] = create_entities_pks(structs, "name")
     groups_pks: dict[tuple, PK] = create_entities_pks(
         [group for groups in schedules.values() for group in groups],
         custom_key_getter=lambda group: group._identify()
@@ -46,12 +46,12 @@ async def get_all_tvgu_data() -> dict[str, list]:
                                                                                                           teachers)
     departments_identified: dict[tuple, DepartmentAggregated] = prepare_departments(structs_pks, teachers_identified)
 
-    structs_identified: dict[tuple, StructAggregated] = prepare_structs(
+    structs_identified: dict[tuple, TvGUStruct] = prepare_structs(
         structs_pks, groups_pks, teachers_identified, departments_identified
     )
     places_identified: dict[str, PlaceAggregated] = prepare_places(lessons_with_ids)
     subjects_identified: dict[str, dict[str, SubjectAggregated]] = prepare_subjects(lessons_with_ids)
-    groups_identified: dict[str, GroupAggregated] = prepare_groups(schedules, groups_pks, structs_identified)
+    groups_identified: dict[tuple, GroupAggregated] = prepare_groups(schedules, groups_pks, structs_identified)
     lessons_aggregated: dict[tuple, LessonAggregated] = prepare_lessons(
         lessons_with_ids,
         places_identified,

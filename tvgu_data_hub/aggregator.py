@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Union, Optional
 
+from schedule_parser.tvgu_schedule_parser.consts import WeekMark, SubjectType
 from schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
 from structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
 from structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
@@ -42,7 +43,7 @@ class LessonAggregated(LessonBase):
     subject_id: int
     place_id: int
 
-    def _identify(self) -> tuple[int, int, int, int, int]:
+    def _identify(self) -> tuple[WeekMark, int, int, int, int]:
         return (
             self.week_mark,
             self.week_day,
@@ -63,8 +64,8 @@ class LessonAggregated(LessonBase):
 def prepare_departments(
         structs_pks: dict[tuple, PK],
         teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
-) -> dict[tuple, StructAggregated]:
-    departments: dict[tuple, StructAggregated] = {}
+) -> dict[tuple, DepartmentAggregated]:
+    departments: dict[tuple, DepartmentAggregated] = {}
     department_id_counter: int = 0
 
     max_teacher_id: int = max(teacher.id for teacher in teachers_identified.values())
@@ -75,7 +76,7 @@ def prepare_departments(
                 cur_teacher = None
             else:
                 cur_teacher, max_teacher_id, is_new = find_teacher_or_create_small(
-                    teachers_identified.values(), department, max_teacher_id
+                    list(teachers_identified.values()), department, max_teacher_id
                 )
 
                 if is_new:
@@ -98,7 +99,7 @@ def prepare_departments(
 
 def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
                     teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
-                    departments_identified: dict[tuple, StructAggregated]) -> dict[tuple, StructAggregated]:
+                    departments_identified: dict[tuple, DepartmentAggregated]) -> dict[tuple, TvGUStruct]:
     structs_aggregated: list[StructAggregated] = []
 
     max_teacher_id: int = max(teacher.id for teacher in teachers_identified.values())
@@ -119,7 +120,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
             if group_pk is not None:
                 groups_ids.append(group_pk.id)
 
-        departments_ids: tuple[int] = tuple(
+        departments_ids: tuple[int, ...] = tuple(
             departments_identified[department._identify()].id for department in struct.departments
         )
 
@@ -127,7 +128,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
             cur_teacher = None
         else:
             cur_teacher, max_teacher_id, is_new = find_teacher_or_create_small(
-                teachers_identified.values(), struct, max_teacher_id
+                list(teachers_identified.values()), struct, max_teacher_id
             )
 
             if is_new:
@@ -144,7 +145,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
                 boss_id=None if cur_teacher is None else cur_teacher.id
             )
         )
-    structs_identified: dict[tuple, StructAggregated] = {}
+    structs_identified: dict[tuple, TvGUStruct] = {}
 
     for struct in structs_aggregated:
         structs_identified[struct._identify()] = struct
@@ -153,10 +154,10 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
 
 
 def prepare_groups(schedules: AllGroupsSchedules, groups_pks: dict[tuple, PK],
-                   structs_identified: dict[tuple, StructAggregated]) -> dict[tuple, GroupAggregated]:
+                   structs_identified: dict[tuple, TvGUStruct]) -> dict[tuple, GroupAggregated]:
     groups_aggregated: list[GroupAggregated] = []
 
-    def find_struct_by_name(struct_name: str) -> Optional[StructAggregated]:
+    def find_struct_by_name(struct_name: str) -> Optional[TvGUStruct]:
         for struct in structs_identified.values():
             if struct.code == struct_name:
                 return struct
@@ -183,8 +184,8 @@ def prepare_groups(schedules: AllGroupsSchedules, groups_pks: dict[tuple, PK],
         )
     groups_identified: dict[tuple, GroupAggregated] = {}
 
-    for group in groups_aggregated:
-        groups_identified[group._identify()] = group
+    for group_aggregated in groups_aggregated:
+        groups_identified[group_aggregated._identify()] = group_aggregated
 
     return groups_identified
 
@@ -227,7 +228,9 @@ def prepare_teachers(
 
 
 def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> dict[str, dict[str, SubjectAggregated]]:
-    all_subjects: set[tuple[str, str]] = set((group.subject_name, group.subject_type) for group in lessons_with_ids)
+    all_subjects: set[tuple[Optional[str], SubjectType]] = set(
+        (lesson.subject_name, lesson.subject_type) for lesson in lessons_with_ids
+    )
     subjects_aggregated: list[SubjectAggregated] = []
 
     for subject_id, subject in enumerate(all_subjects):
@@ -268,7 +271,7 @@ def prepare_places(lessons_with_ids: list[LessonWithID]) -> dict[str, PlaceAggre
 
 def prepare_lessons(
         lessons: list[LessonWithID],
-        places_identified: dict[tuple, PlaceAggregated],
+        places_identified: dict[str, PlaceAggregated],
         subjects_identified: dict[str, dict[str, SubjectAggregated]],
         teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
         groups_identified: dict[tuple, GroupAggregated],
