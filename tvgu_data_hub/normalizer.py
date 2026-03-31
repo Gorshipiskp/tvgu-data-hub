@@ -2,13 +2,13 @@ from collections import defaultdict
 from dataclasses import dataclass, fields, replace
 from typing import Optional, Union
 
-from ..schedule_parser.tvgu_schedule_parser.consts import SubjectType
-from ..schedule_parser.tvgu_schedule_parser.misc import Lesson, Group, AllGroupsSchedules, TeacherSmall
-from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
 from .config import USE_HEURISTICS_FOR_TEACHERS, SKIP_UNRECOGNIZED_TEACHERS
 from .creator_fk import PK
 from .misc import list_to_dict_by_key
+from .schedule_parser.tvgu_schedule_parser.consts import SubjectType
+from .schedule_parser.tvgu_schedule_parser.misc import Lesson, Group, AllGroupsSchedules, TeacherSmall
 from .teacher_heuristics import resolve_teacher_small_in_lesson
+from .teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
 @dataclass(frozen=True, kw_only=True)

@@ -6,8 +6,8 @@ from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from .hub import get_all_tvgu_data
-from .misc import CustomEncoder
+from .misc import Teacher, CustomEncoder
+from .parser import get_all_tvgu_teachers
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -18,9 +18,9 @@ class Args:
     output_auto: Optional[str]
 
 
-def dump_teachers(data: dict[str, list], output_path: str, prettify: bool) -> None:
+def dump_teachers(teachers: list[Teacher], output_path: str, prettify: bool) -> None:
     json.dump(
-        data,
+        teachers,
         open(output_path, "w+", encoding="UTF-8"),
         ensure_ascii=False,
         indent=2 if prettify else None,
@@ -29,11 +29,11 @@ def dump_teachers(data: dict[str, list], output_path: str, prettify: bool) -> No
 
 
 async def main(args: Args) -> None:
-    all_data: dict[str, list] = await get_all_tvgu_data()
+    teachers: list[Teacher] = await get_all_tvgu_teachers()
 
     if args.output is not None or args.output_auto:
         if args.output_auto is not None:
-            output_path: str = f"all_tvgu_data-{date.today()}.json"
+            output_path: str = f"teachers-{date.today()}.json"
         else:
             output_path: str = args.output
 
@@ -42,11 +42,11 @@ async def main(args: Args) -> None:
             directory.mkdir(parents=True, exist_ok=True)
             output_path: Path = directory / output_path
 
-        dump_teachers(all_data, output_path, args.prettify)
+        dump_teachers(teachers, output_path, args.prettify)
 
 
 def parse_args() -> Args:
-    parser = argparse.ArgumentParser(description="Парсер всей информации ТвГУ")
+    parser = argparse.ArgumentParser(description="Парсер преподавателей ТвГУ")
 
     parser.add_argument("-o", "--output", help="Путь к выходному файлу для экспорта расписаний")
     parser.add_argument("-od", "--output-directory", help="Путь к директории для экспорта расписаний")
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     cur_args: Args = parse_args()
 
-    if cur_args.output is not None and cur_args.output_auto:
-        raise ValueError("Нельзя одновременно можно использовать параметр -o и -oa")
+    if cur_args.output is not None and cur_args.output_auto is not None:
+        raise ValueError("Одновременно можно использовать параметр -o и -oa")
 
     asyncio.run(main(cur_args))

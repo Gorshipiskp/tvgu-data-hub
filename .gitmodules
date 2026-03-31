@@ -1,9 +1,9 @@
 [submodule "schedule_parser"]
-	path = schedule_parser
+	path = tvgu_data_hub/schedule_parser
 	url = https://github.com/gorshipiskp/tvgu-schedule-parser
 [submodule "teachers_parser"]
-	path = teachers_parser
+	path = tvgu_data_hub/teachers_parser
 	url = https://github.com/gorshipiskp/tvgu-teachers-parser
 [submodule "structs_parser"]
-	path = structs_parser
+	path = tvgu_data_hub/structs_parser
 	url = https://github.com/gorshipiskp/tvgu-structs-parser

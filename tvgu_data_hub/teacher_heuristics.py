@@ -3,8 +3,8 @@ from typing import Optional
 
 from rapidfuzz import fuzz
 
-from ..schedule_parser.tvgu_schedule_parser.misc import Lesson
-from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
+from .schedule_parser.tvgu_schedule_parser.misc import Lesson
+from .teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
 def normalize(s: Optional[str]) -> str:

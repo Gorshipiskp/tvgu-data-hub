@@ -1,8 +1,8 @@
 from dataclasses import dataclass, fields
 from typing import Any, Optional, TypeVar, Type, Callable
 
-from ..schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
-from ..teachers_parser.tvgu_teachers_parser.misc import Teacher
+from .schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
+from .teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
 @dataclass(frozen=True, kw_only=True)
