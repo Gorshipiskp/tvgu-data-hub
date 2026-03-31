@@ -13,13 +13,13 @@ from .structs_parser.tvgu_structs_parser.normalizer import TvGUStruct
 from .teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
 from .types import GroupAggregated, DepartmentAggregated, LessonAggregated, LessonWithGroups, LessonWithID, \
-    SubjectAggregated, PlaceAggregated, TeacherAggregated, TeacherSmallAggregated
+    SubjectAggregated, PlaceAggregated, TeacherAggregated, TeacherSmallAggregated, StructAggregated
 
 
 @dataclass(frozen=True, kw_only=True)
 class TvGUInfo:
     departments: list[DepartmentAggregated]
-    structs: list[TvGUStruct]
+    structs: list[StructAggregated]
     teachers: list[TeacherAggregated | TeacherSmallAggregated]
     places: list[PlaceAggregated]
     subjects: list[SubjectAggregated]
@@ -59,7 +59,7 @@ async def get_all_tvgu_data() -> TvGUInfo:
                                                                                                           teachers)
     departments_identified: dict[tuple, DepartmentAggregated] = prepare_departments(structs_pks, teachers_identified)
 
-    structs_identified: dict[tuple, TvGUStruct] = prepare_structs(
+    structs_identified: dict[tuple, StructAggregated] = prepare_structs(
         structs_pks, groups_pks, teachers_identified, departments_identified
     )
     places_identified: dict[str, PlaceAggregated] = prepare_places(lessons_with_ids)

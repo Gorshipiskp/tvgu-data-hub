@@ -49,7 +49,7 @@ def prepare_departments(
 
 def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
                     teachers_identified: dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]],
-                    departments_identified: dict[tuple, DepartmentAggregated]) -> dict[tuple, TvGUStruct]:
+                    departments_identified: dict[tuple, DepartmentAggregated]) -> dict[tuple, StructAggregated]:
     structs_aggregated: list[StructAggregated] = []
 
     max_teacher_id: int = max(teacher.id for teacher in teachers_identified.values())
@@ -61,24 +61,24 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
         return None
 
     for struct_id, struct_pk in enumerate(structs_pks.values()):
-        struct: TvGUStruct = struct_pk.entity
+        struct_tvgu: TvGUStruct = struct_pk.entity
         groups_ids: list[int] = []
 
-        for group in struct.groups:
+        for group in struct_tvgu.groups:
             group_pk: Optional[PK] = find_group_by_name(group)
 
             if group_pk is not None:
                 groups_ids.append(group_pk.id)
 
         departments_ids: tuple[int, ...] = tuple(
-            departments_identified[department._identify()].id for department in struct.departments
+            departments_identified[department._identify()].id for department in struct_tvgu.departments
         )
 
-        if struct.boss_surname is None:
+        if struct_tvgu.boss_surname is None:
             cur_teacher = None
         else:
             cur_teacher, max_teacher_id, is_new = find_teacher_or_create_small(
-                list(teachers_identified.values()), struct, max_teacher_id
+                list(teachers_identified.values()), struct_tvgu, max_teacher_id
             )
 
             if is_new:
@@ -87,7 +87,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
         structs_aggregated.append(
             inherit_instance_dataclass(
                 StructAggregated,
-                struct,
+                struct_tvgu,
                 "groups", "departments", "boss_name", "boss_surname", "boss_patronymic",
                 id=struct_id,
                 groups_ids=tuple(groups_ids),
@@ -95,7 +95,7 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
                 boss_id=None if cur_teacher is None else cur_teacher.id
             )
         )
-    structs_identified: dict[tuple, TvGUStruct] = {}
+    structs_identified: dict[tuple, StructAggregated] = {}
 
     for struct in structs_aggregated:
         structs_identified[struct._identify()] = struct
@@ -104,10 +104,10 @@ def prepare_structs(structs_pks: dict[tuple, PK], groups_pks: dict[tuple, PK],
 
 
 def prepare_groups(schedules: AllGroupsSchedules, groups_pks: dict[tuple, PK],
-                   structs_identified: dict[tuple, TvGUStruct]) -> dict[tuple, GroupAggregated]:
+                   structs_identified: dict[tuple, StructAggregated]) -> dict[tuple, GroupAggregated]:
     groups_aggregated: list[GroupAggregated] = []
 
-    def find_struct_by_name(struct_name: str) -> Optional[TvGUStruct]:
+    def find_struct_by_name(struct_name: str) -> Optional[StructAggregated]:
         for struct in structs_identified.values():
             if struct.code == struct_name:
                 return struct
