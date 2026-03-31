@@ -144,7 +144,7 @@ def prepare_teachers(
         lessons_pks: dict[tuple, PK],
         teachers: list[Teacher]
 ) -> dict[tuple, Union[TeacherAggregated, TeacherSmallAggregated]]:
-    teacher_set: dict[Teacher | TeacherSmall, bool] = {}
+    teacher_set: dict[Union[Teacher, TeacherSmall], bool] = {}
 
     for teacher in teachers:
         teacher_set[teacher] = False

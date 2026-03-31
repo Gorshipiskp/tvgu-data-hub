@@ -95,7 +95,7 @@ class SubjectAggregated(NeedPK):
             self.type
         )
 
-    def get_pk(self) -> tuple:
+    def get_pk(self) -> tuple[str, SubjectType]:
         return self._identify()
 
     def __hash__(self) -> int:
@@ -135,7 +135,7 @@ class TeacherAggregated(Teacher, NeedPK):
     id: int
     has_lessons: bool
 
-    def get_pk(self) -> tuple:
+    def get_pk(self) -> tuple[str, str, str]:
         return (
             self.name,
             self.surname,

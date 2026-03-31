@@ -62,7 +62,7 @@ def normalize_teachers_for_lessons(lesson_pks: dict[tuple, PK], teachers: list[T
                                                                          handle_key_func=lambda x: x.lower())
     for lesson_key, lesson_pk in lesson_pks.items():
         lesson: LessonWithGroups = lesson_pk.entity
-        cur_teachers: list[Union[TeacherSmall | Teacher]] = []
+        cur_teachers: list[Union[TeacherSmall, Teacher]] = []
 
         for teacher_small in lesson.teachers:
             suitable_teachers: Optional[list[Teacher]] = teachers_by_initials.get(teacher_small.initials.lower())
