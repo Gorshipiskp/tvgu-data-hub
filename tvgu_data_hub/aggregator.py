@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from typing import Union, Optional
 
 from .creator_fk import TeacherAggregated, TeacherSmallAggregated, PK, inherit_instance_dataclass
+from .normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
 from .schedule_parser.tvgu_schedule_parser.consts import WeekMark, SubjectType
 from .schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
 from .structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
 from .structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
-from .normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
 
 
 @dataclass(frozen=True, kw_only=True)

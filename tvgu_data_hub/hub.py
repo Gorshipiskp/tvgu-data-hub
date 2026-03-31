@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 from typing import Union
 
 from .aggregator import prepare_lessons, LessonAggregated, prepare_places, prepare_subjects, prepare_teachers, \
@@ -14,7 +15,18 @@ from .teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
 
 
-async def get_all_tvgu_data() -> dict[str, list]:
+@dataclass(frozen=True, kw_only=True)
+class TvGUInfo:
+    departments: list[DepartmentAggregated]
+    structs: list[TvGUStruct]
+    teachers: list[TeacherAggregated]
+    places: list[PlaceAggregated]
+    subjects: list[SubjectAggregated]
+    groups: list[GroupAggregated]
+    lessons: list[LessonAggregated]
+
+
+async def get_all_tvgu_data() -> TvGUInfo:
     structs: list[TvGUStruct]
     teachers: list[Teacher]
     schedules: AllGroupsSchedules
@@ -60,12 +72,12 @@ async def get_all_tvgu_data() -> dict[str, list]:
         groups_identified
     )
 
-    return {
-        "departments": list(departments_identified.values()),
-        "structs": list(structs_identified.values()),
-        "teachers": list(teachers_identified.values()),
-        "places": list(places_identified.values()),
-        "subjects": [subject for subjects in subjects_identified.values() for subject in subjects.values()],
-        "groups": list(groups_identified.values()),
-        "lessons": list(lessons_aggregated.values())
-    }
+    return TvGUInfo(
+        departments=list(departments_identified.values()),
+        structs=list(structs_identified.values()),
+        teachers=list(teachers_identified.values()),
+        places=list(places_identified.values()),
+        subjects=[subject for subjects in subjects_identified.values() for subject in subjects.values()],
+        groups=list(groups_identified.values()),
+        lessons=list(lessons_aggregated.values())
+    )

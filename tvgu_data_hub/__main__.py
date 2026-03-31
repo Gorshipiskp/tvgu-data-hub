@@ -1,12 +1,12 @@
 import argparse
 import asyncio
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import date
 from pathlib import Path
 from typing import Optional
 
-from .hub import get_all_tvgu_data
+from .hub import get_all_tvgu_data, TvGUInfo
 from .misc import CustomEncoder
 
 
@@ -18,9 +18,9 @@ class Args:
     output_auto: Optional[str]
 
 
-def dump_teachers(data: dict[str, list], output_path: str, prettify: bool) -> None:
+def dump_tvgu_data(data: TvGUInfo, output_path: str, prettify: bool) -> None:
     json.dump(
-        data,
+        asdict(data),
         open(output_path, "w+", encoding="UTF-8"),
         ensure_ascii=False,
         indent=2 if prettify else None,
@@ -29,7 +29,7 @@ def dump_teachers(data: dict[str, list], output_path: str, prettify: bool) -> No
 
 
 async def main(args: Args) -> None:
-    all_data: dict[str, list] = await get_all_tvgu_data()
+    all_data: TvGUInfo = await get_all_tvgu_data()
 
     if args.output is not None or args.output_auto:
         if args.output_auto is not None:
@@ -42,7 +42,7 @@ async def main(args: Args) -> None:
             directory.mkdir(parents=True, exist_ok=True)
             output_path: Path = directory / output_path
 
-        dump_teachers(all_data, output_path, args.prettify)
+        dump_tvgu_data(all_data, output_path, args.prettify)
 
 
 def parse_args() -> Args:
