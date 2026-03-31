@@ -20,7 +20,7 @@ from .types import GroupAggregated, DepartmentAggregated, LessonAggregated, Less
 class TvGUInfo:
     departments: list[DepartmentAggregated]
     structs: list[TvGUStruct]
-    teachers: list[TeacherAggregated]
+    teachers: list[TeacherAggregated | TeacherSmallAggregated]
     places: list[PlaceAggregated]
     subjects: list[SubjectAggregated]
     groups: list[GroupAggregated]
