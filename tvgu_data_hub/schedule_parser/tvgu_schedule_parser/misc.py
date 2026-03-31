@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from json import JSONEncoder
-from typing import Optional, TypeAlias
+from typing import Optional
 
 from aiohttp import ClientSession
 
