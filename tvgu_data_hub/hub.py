@@ -2,17 +2,18 @@ import asyncio
 from dataclasses import dataclass
 from typing import Union
 
-from .aggregator import prepare_lessons, LessonAggregated, prepare_places, prepare_subjects, prepare_teachers, \
-    GroupAggregated, prepare_groups, prepare_structs, DepartmentAggregated, prepare_departments
-from .creator_fk import PK, create_entities_pks, inherit_instance_dataclass, TeacherSmallAggregated, TeacherAggregated
-from .normalizer import LessonWithGroups, lessons_normalize, LessonWithID, SubjectAggregated, PlaceAggregated, \
-    normalize_teachers_for_lessons
+from .aggregator import prepare_lessons, prepare_places, prepare_subjects, prepare_teachers, \
+    prepare_groups, prepare_structs, prepare_departments
+from .creator_fk import PK, create_entities_pks, inherit_instance_dataclass
+from .normalizer import lessons_normalize, normalize_teachers_for_lessons
 from .schedule_parser.tvgu_schedule_parser import get_all_tvgu_schedules
 from .schedule_parser.tvgu_schedule_parser.misc import AllGroupsSchedules
 from .structs_parser.tvgu_structs_parser import get_all_tvgu_structs
 from .structs_parser.tvgu_structs_parser.normalizer import TvGUStruct
 from .teachers_parser.tvgu_teachers_parser import get_all_tvgu_teachers
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
+from .types import GroupAggregated, DepartmentAggregated, LessonAggregated, LessonWithGroups, LessonWithID, \
+    SubjectAggregated, PlaceAggregated, TeacherAggregated, TeacherSmallAggregated
 
 
 @dataclass(frozen=True, kw_only=True)

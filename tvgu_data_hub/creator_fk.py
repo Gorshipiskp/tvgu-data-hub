@@ -1,9 +1,6 @@
 from dataclasses import dataclass, fields
 from typing import Any, Optional, TypeVar, Type, Callable
 
-from .schedule_parser.tvgu_schedule_parser.misc import TeacherSmall
-from .teachers_parser.tvgu_teachers_parser.misc import Teacher
-
 
 @dataclass(frozen=True, kw_only=True)
 class PK:
@@ -11,19 +8,7 @@ class PK:
     entity: Any
 
 
-@dataclass(frozen=True, kw_only=True)
-class TeacherAggregated(Teacher):
-    id: int
-    has_lessons: bool
-
-
-@dataclass(frozen=True, kw_only=True)
-class TeacherSmallAggregated(TeacherSmall):
-    id: int
-    has_lessons: bool
-
-
-# Функция для создания уникальных идентификаторов на основе итогово списка сущностей
+# Функция для создания уникальных идентификаторов на основе итогового списка сущностей
 # (должно гарантироваться, что этот список является конечным, то есть, иных сущностей того же рода нигде не встретится)
 def create_entities_pks(entities: list[Any], key_name: Optional[str] = None, skip_none_keys: bool = False,
                         *, custom_key_getter: Optional[Callable[..., tuple]] = None) -> dict[tuple, PK]:

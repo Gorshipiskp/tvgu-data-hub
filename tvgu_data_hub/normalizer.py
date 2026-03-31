@@ -1,65 +1,14 @@
 from collections import defaultdict
-from dataclasses import dataclass, fields, replace
+from dataclasses import fields, replace
 from typing import Optional, Union
 
 from .config import USE_HEURISTICS_FOR_TEACHERS, SKIP_UNRECOGNIZED_TEACHERS
 from .creator_fk import PK
 from .misc import list_to_dict_by_key
-from .schedule_parser.tvgu_schedule_parser.consts import SubjectType
-from .schedule_parser.tvgu_schedule_parser.misc import Lesson, Group, AllGroupsSchedules, TeacherSmall
+from .schedule_parser.tvgu_schedule_parser.misc import AllGroupsSchedules, TeacherSmall
 from .teacher_heuristics import resolve_teacher_small_in_lesson
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
-
-
-@dataclass(frozen=True, kw_only=True)
-class LessonWithGroups(Lesson):
-    groups: tuple[Group, ...]
-
-
-@dataclass(frozen=True, kw_only=True)
-class LessonWithID(LessonWithGroups):
-    id: int
-
-
-@dataclass(frozen=True, kw_only=True)
-class SubjectAggregated:
-    id: int
-    name: str
-    type: SubjectType
-
-    def _identify(self) -> tuple[str, SubjectType]:
-        return (
-            self.name,
-            self.type
-        )
-
-    def __hash__(self) -> int:
-        return hash(self._identify())
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, SubjectAggregated):
-            return self._identify() == other._identify()
-        return NotImplemented
-
-
-@dataclass(frozen=True, kw_only=True)
-class PlaceAggregated:
-    id: int
-    name: str
-    is_link: bool
-
-    def _identify(self) -> tuple[str]:
-        return (
-            self.name,
-        )
-
-    def __hash__(self) -> int:
-        return hash(self._identify())
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, PlaceAggregated):
-            return self._identify() == other._identify()
-        return NotImplemented
+from .types import LessonWithGroups
 
 
 def lessons_normalize(schedules: AllGroupsSchedules) -> list[LessonWithGroups]:

@@ -1,63 +1,14 @@
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Union, Optional
 
-from .creator_fk import TeacherAggregated, TeacherSmallAggregated, PK, inherit_instance_dataclass
-from .normalizer import LessonWithID, PlaceAggregated, SubjectAggregated
-from .schedule_parser.tvgu_schedule_parser.consts import WeekMark, SubjectType
-from .schedule_parser.tvgu_schedule_parser.misc import LessonBase, TeacherSmall, GroupBase, Group, AllGroupsSchedules
-from .structs_parser.tvgu_structs_parser.normalizer import TvGUStructBase, TvGUStruct
-from .structs_parser.tvgu_structs_parser.parsers.parser_structs import DepartmentBase, Department
+from .creator_fk import PK, inherit_instance_dataclass
+from .schedule_parser.tvgu_schedule_parser.consts import SubjectType
+from .schedule_parser.tvgu_schedule_parser.misc import TeacherSmall, Group, AllGroupsSchedules
+from .structs_parser.tvgu_structs_parser.normalizer import TvGUStruct
+from .structs_parser.tvgu_structs_parser.parsers.parser_structs import Department
 from .teachers_parser.tvgu_teachers_parser.misc import Teacher
-
-
-@dataclass(frozen=True, kw_only=True)
-class GroupAggregated(GroupBase):
-    id: int
-    struct_id: int
-    has_schedule: bool
-
-
-@dataclass(frozen=True, kw_only=True)
-class StructAggregated(TvGUStructBase):
-    id: int
-    boss_id: Optional[int]
-    groups_ids: tuple[int]
-    departments_ids: tuple[int]
-
-
-@dataclass(frozen=True, kw_only=True)
-class DepartmentAggregated(DepartmentBase):
-    id: int
-    boss_id: Optional[int]
-    boss_jobs: Optional[list[str]]
-    struct_id: int
-
-
-@dataclass(frozen=True, kw_only=True)
-class LessonAggregated(LessonBase):
-    id: int
-    groups_ids: tuple[int]
-    teachers_ids: tuple[int]
-    subject_id: int
-    place_id: int
-
-    def _identify(self) -> tuple[WeekMark, int, int, int, int]:
-        return (
-            self.week_mark,
-            self.week_day,
-            self.lesson_number,
-            self.subject_id,
-            self.place_id,
-        )
-
-    def __hash__(self) -> int:
-        return hash(self._identify())
-
-    def __eq__(self, other) -> bool:
-        if isinstance(other, LessonAggregated):
-            return self._identify() == other._identify()
-        return NotImplemented
+from .types import GroupAggregated, StructAggregated, DepartmentAggregated, LessonAggregated, LessonWithID, \
+    SubjectAggregated, PlaceAggregated, TeacherAggregated, TeacherSmallAggregated
 
 
 def prepare_departments(
