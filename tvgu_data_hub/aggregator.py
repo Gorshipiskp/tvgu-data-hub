@@ -200,7 +200,9 @@ def prepare_subjects(lessons_with_ids: list[LessonWithID]) -> dict[str, dict[str
 
 
 def prepare_places(lessons_with_ids: list[LessonWithID]) -> dict[str, PlaceAggregated]:
-    all_places: set[str] = set(group.place for group in lessons_with_ids)
+    all_places: set[str] = set(
+        group.place for group in lessons_with_ids
+    )
     places_aggregated: list[PlaceAggregated] = []
 
     for place_id, place in enumerate(all_places):
@@ -239,7 +241,10 @@ def prepare_lessons(
                 LessonAggregated,
                 lesson,
                 "groups", "teachers", "subject_name", "subject_type", "place",
-                groups_ids=tuple(groups_identified[group._identify()].id for group in lesson.groups),
+                groups_ids=tuple(
+                    groups_identified[group._identify()].id
+                    for group in lesson.groups
+                ),
                 teachers_ids=tuple(teachers_ids),
                 subject_id=subjects_identified[lesson.subject_type][lesson.subject_name].id,
                 place_id=places_identified[lesson.place].id
